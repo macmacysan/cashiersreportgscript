@@ -1,0 +1,162 @@
+<script>
+    //script-installment.html
+    // ── INSTALLMENT / CUSTOMER LOGIC ──
+    let instData = [
+        // Sample Data to demonstrate the table layout
+        { id: 'inst1', branch: 'GOA', lname: 'Dela Cruz', fname: 'Juan', mname: 'P', suffix: 'NONE', street: 'Zone 1', brgy: 'San Jose', city: 'GOA', prov: 'CAMARINES SUR', occ: 'Teacher', contact: '09123456789', agent: 'Mike R.', ref: 'Sarah T.', added: '2026-04-23' }
+    ];
+    let editingInstId = null;
+
+    function resetInstForm() {
+        //showInstForm(); // Reveals the form
+        editingInstId = null;
+        ['instLName', 'instFName', 'instMName', 'instBrgy', 'instMobile', 'instEmail', 'instStreet', 'instOcc', 'instAgent', 'instRef'].forEach(id => setV(id, ''));
+        setV('instSuffix', 'NONE');
+        setV('instProv', 'CAMARINES SUR');
+        setV('instCity', 'GOA');
+
+        setT('instFormModeLabel', 'Add Customer');
+        const mb = el('instFormModeBadge'); if (mb) { mb.textContent = 'New'; mb.className = 'mode-badge'; }
+        setT('instSaveBtnLabel', 'Save Customer');
+        const sb = el('instSaveBtn'); if (sb) sb.className = 'btn-save green-save';
+        const db = el('instDeleteBtn'); if (db) db.style.display = 'none';
+    }
+
+    function loadInstForEdit(id) {
+        showInstForm(); // Reveals the form
+        const item = instData.find(e => e.id === id); if (!item) return;
+        editingInstId = item.id;
+        setV('instBranch', item.branch); setV('instLName', item.lname); setV('instFName', item.fname);
+        setV('instMName', item.mname); setV('instSuffix', item.suffix); setV('instProv', item.prov);
+        setV('instCity', item.city); setV('instBrgy', item.brgy); setV('instMobile', item.contact);
+        setV('instStreet', item.street); setV('instOcc', item.occ); setV('instAgent', item.agent);
+        setV('instRef', item.ref);
+
+        setT('instFormModeLabel', 'Edit Customer');
+        const mb = el('instFormModeBadge'); if (mb) { mb.textContent = 'Editing'; mb.className = 'mode-badge edit'; }
+        setT('instSaveBtnLabel', 'Update Customer');
+        const sb = el('instSaveBtn'); if (sb) sb.className = 'btn-save update';
+        const db = el('instDeleteBtn'); if (db) db.style.display = 'flex';
+    }
+
+    function saveInst() {
+        const lname = getV('instLName').trim();
+        const fname = getV('instFName').trim();
+
+        if (!lname || !fname) { alert('Last Name and First Name are required.'); return; }
+
+        const entry = {
+            id: editingInstId || Date.now().toString(),
+            branch: getV('instBranch'), lname, fname, mname: getV('instMName').trim(),
+            suffix: getV('instSuffix'), prov: getV('instProv').trim(), city: getV('instCity').trim(),
+            brgy: getV('instBrgy').trim(), street: getV('instStreet').trim(), occ: getV('instOcc').trim(),
+            contact: getV('instMobile').trim(), agent: getV('instAgent').trim(), ref: getV('instRef').trim(),
+            added: new Date().toISOString().split('T')[0] // Current Date
+        };
+
+        if (editingInstId) { const idx = instData.findIndex(e => e.id === editingInstId); if (idx !== -1) instData[idx] = entry; }
+        else instData.push(entry);
+
+        resetInstForm(); renderInstallment(); hideInstForm(); // Closes the form after successful save
+    }
+
+    function deleteInstItem() {
+        if (!editingInstId) return;
+
+        showAppConfirm('Delete Customer', 'Are you sure you want to permanently delete this customer account?', () => {
+            instData = instData.filter(e => e.id !== editingInstId);
+            resetInstForm();
+            renderInstallment();
+        });
+    }
+
+    function renderInstallment() {
+        const table = el('installmentTable'); if (!table) return;
+        table.querySelectorAll('tbody').forEach(tb => tb.remove());
+
+        // Filtering Logic
+        const sTerm = getV('fltInstSearch').toLowerCase();
+        const sBranch = getV('fltInstBranch');
+        const sCity = getV('fltInstCity');
+        const sAgent = getV('fltInstAgent');
+        const sRef = getV('fltInstRef');
+
+        const filteredData = instData.filter(i => {
+            const matchSearch = (i.lname.toLowerCase().includes(sTerm) || i.fname.toLowerCase().includes(sTerm) || i.contact.includes(sTerm));
+            const matchBranch = sBranch === '' || i.branch === sBranch;
+            const matchCity = sCity === '' || i.city === sCity;
+            const matchAgent = sAgent === '' || i.agent === sAgent;
+            const matchRef = sRef === '' || i.ref === sRef;
+            return matchSearch && matchBranch && matchCity && matchAgent && matchRef;
+        });
+
+        const tbody = document.createElement('tbody');
+
+        filteredData.forEach(item => {
+            const row = document.createElement('tr'); row.className = 'exp-row';
+            // Utilizing horizontal flexbox for the actions exactly like previous tabs
+            row.innerHTML = `
+      <td>${esc(item.branch)}</td>
+      <td style="font-weight:700; color:var(--blue);">${esc(item.lname)}</td>
+      <td>${esc(item.fname)}</td>
+      <td>${esc(item.mname)}</td>
+      <td>${item.suffix !== 'NONE' ? esc(item.suffix) : ''}</td>
+      <td>${esc(item.street)}</td>
+      <td>${esc(item.brgy)}</td>
+      <td>${esc(item.city)}</td>
+      <td>${esc(item.prov)}</td>
+      <td style="color:var(--text-muted);">${esc(item.occ)}</td>
+      <td style="font-family:'JetBrains Mono', monospace;">${esc(item.contact)}</td>
+      <td>${esc(item.agent)}</td>
+      <td>${esc(item.ref)}</td>
+      <td style="color:var(--text-faint); font-size:10px;">${esc(item.added)}</td>
+      <td style="vertical-align: middle; white-space: nowrap;">
+        <div class="tbl-actions" style="display: flex; flex-direction: row; gap: 5px; justify-content: center; align-items: center;">
+          <button class="act-btn act-edit" data-id="${item.id}"><i class="fas fa-edit"></i></button>
+          <button class="act-btn act-del" data-id="${item.id}"><i class="fas fa-trash-alt"></i></button>
+        </div>
+      </td>
+    `;
+            tbody.appendChild(row);
+        });
+
+        table.appendChild(tbody);
+
+        // Bind Action Buttons
+        table.querySelectorAll('.act-edit').forEach(btn => btn.onclick = e => { e.preventDefault(); loadInstForEdit(btn.getAttribute('data-id')); });
+        table.querySelectorAll('.act-del').forEach(btn => btn.onclick = e => {
+            e.preventDefault();
+            const id = btn.getAttribute('data-id');
+
+            showAppConfirm('Delete Customer', 'Remove this customer account?', () => {
+                instData = instData.filter(i => i.id !== id);
+                if (editingInstId === id) resetInstForm();
+                renderInstallment();
+            });
+        });
+
+        setT('instRowInfo', filteredData.length + ' record' + (filteredData.length === 1 ? '' : 's') + ' found');
+    }
+
+    // Ensure you bind the main save and delete buttons on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+        renderInstallment();
+        resetInstForm();
+        bindBtn('instSaveBtn', saveInst);
+        bindBtn('instDeleteBtn', deleteInstItem);
+    });
+
+    function showInstForm() {
+        const formContainer = el('instFormContainer');
+        const landingPanel = el('instLandingPanel');
+        if (landingPanel) landingPanel.style.display = 'none';   // ← add this
+        if (formContainer) formContainer.style.display = 'flex';
+    }
+
+    function hideInstForm() {
+        const formContainer = el('instFormContainer');
+        const landingPanel = el('instLandingPanel');
+        if (formContainer) formContainer.style.display = 'none';
+        if (landingPanel) landingPanel.style.display = 'flex';   // ← add this
+    }
+</script>

@@ -1,0 +1,503 @@
+<div class="main-wrap">
+
+    <div class="tab-panel active" id="tab-expenses">
+        <div class="exp-layout">
+            <div class="exp-table-side">
+                <div class="panel-header">
+                    <h2><i class="fas fa-receipt ph-icon"></i> Expenses, Purchases &amp; Drawings</h2>
+                    <div class="panel-actions">
+                        <button class="btn-outline" id="undo-expenses" onclick="undoAction('expenses')" disabled
+                            title="Undo"><i class="fas fa-undo"></i></button>
+                        <button class="btn-outline" id="redo-expenses" onclick="redoAction('expenses')" disabled
+                            title="Redo"><i class="fas fa-redo"></i></button>
+                        <div style="width:1px;height:16px;background:var(--border);margin:0 2px;"></div>
+                        <button class="btn-outline"
+                            style="color:var(--red);border-color:var(--red-bd);background:var(--red-bg);"
+                            onclick="deleteAllExpenses()">
+                            <i class="fas fa-trash-alt"></i> Clear All
+                        </button>
+                        <button class="btn-add mobile-add-btn" onclick="openMobileForm()">
+                            <i class="fas fa-plus"></i> Add Entry
+                        </button>
+                    </div>
+                </div>
+                <div class="exp-table-scroll">
+                    <table id="expenseTable" class="pos-table">
+                        <thead>
+                            <tr>
+                                <th style="width:38%">Description</th>
+                                <th style="width:18%">Receipt No.</th>
+                                <th style="width:14%">Category</th>
+                                <th style="width:8%">VAT</th>
+                                <th style="width:22%;text-align:right;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expenseTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="exp-footer">
+                    <div class="exp-footer-info" id="rowCountInfo">0 entries · drag to reorder</div>
+                    <div class="exp-total-bar">
+                        <div class="exp-total-item t-red">Company: <span id="tot-company">₱0.00</span></div>
+                        <div class="exp-total-item t-green">Purchases: <span id="tot-purchases">₱0.00</span></div>
+                        <div class="exp-total-item t-amber">Drawings: <span id="tot-drawings">₱0.00</span></div>
+                        <div class="exp-total-item t-purple">Total: <span id="grandTotalDisplay">₱0.00</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="exp-form-side">
+                <div class="form-panel-header">
+                    <h3><span id="formModeLabel">Add Expense</span><span class="mode-badge new"
+                            id="formModeBadge">New</span></h3>
+                </div>
+                <div class="form-body">
+                    <div class="fgroup">
+                        <label>Type (Group)</label>
+                        <select id="inputType">
+                            <option value="Company Expenses">🏢 Company Expenses</option>
+                            <option value="Purchases">📦 Purchases</option>
+                            <option value="Drawings">💸 Drawings</option>
+                        </select>
+                    </div>
+                    <div class="fgroup">
+                        <label>Description *</label>
+                        <input type="text" id="inputDesc" placeholder="e.g., Office supplies, rent...">
+                    </div>
+                    <div class="frow-2">
+                        <div class="fgroup">
+                            <label>Receipt No.</label>
+                            <input type="text" id="inputReceipt" placeholder="INV-001">
+                        </div>
+                        <div class="fgroup">
+                            <label>VAT Type</label>
+                            <select id="inputVat">
+                                <option value="Vat">VAT</option>
+                                <option value="Non-Vat">Non-VAT</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="fgroup">
+                        <label>Category</label>
+                        <select id="inputCategory">
+                            <option value="Advertising">Advertising</option>
+                            <option value="Bank Fees">Bank Fees</option>
+                            <option value="Business Meals">Business Meals</option>
+                            <option value="Charitable Contributions">Charitable Contributions</option>
+                            <option value="Credit and Collection Fees">Credit and Collection Fees</option>
+                            <option value="Dues and Subscriptions">Dues and Subscriptions</option>
+                            <option value="Education and training expenses for employees">Education and training
+                                expenses for employees</option>
+                            <option value="Employee Benefit Programs">Employee Benefit Programs</option>
+                            <option value="Food Allowance">Food Allowance</option>
+                            <option value="Freight, Postage and Shipping">Freight, Postage and Shipping</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="Legal and professional expenses">Legal and professional expenses</option>
+                            <option value="Licenses and Permits">Licenses and Permits</option>
+                            <option value="Office Expenses and Supplies">Office Expenses and Supplies</option>
+                            <option value="Others">Others</option>
+                            <option value="Printing">Printing</option>
+                            <option value="Rent">Rent</option>
+                            <option value="Salaries and Compensation">Salaries and Compensation</option>
+                            <option value="Telephone/Communication Expense">Telephone/Communication Expense</option>
+                            <option value="Transportation Allowance">Transportation Allowance</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Vehicle Maintenance and Repairs">Vehicle Maintenance and Repairs</option>
+                        </select>
+                    </div>
+                    <div class="fgroup">
+                        <label>Amount (₱)</label>
+                        <input type="text" inputmode="decimal" id="inputAmount" placeholder="-"
+                            class="mono-input comma-input">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-save" id="saveBtn"><i class="fas fa-save"></i> <span id="saveBtnLabel">Save
+                            Entry</span></button>
+                    <button class="btn-cancel" id="cancelExpBtn" onclick="resetForm()">Cancel / Clear</button>
+                    <button class="btn-delete" id="deleteBtn"><i class="fas fa-trash-alt"></i> Delete Entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-panel" id="tab-checks">
+        <div class="exp-layout">
+            <div class="exp-table-side">
+                <div class="panel-header">
+                    <h2><i class="fas fa-money-check-alt ph-icon"></i> Check Payments</h2>
+                    <div class="panel-actions">
+                        <div
+                            style="font-size:10px;font-weight:700;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-family:'JetBrains Mono',monospace;">
+                            Total: <span id="tot-checks" style="color:var(--blue);">₱0.00</span>
+                        </div>
+                        <button class="btn-outline" id="undo-checks" onclick="undoAction('checks')" disabled
+                            title="Undo"><i class="fas fa-undo"></i></button>
+                        <button class="btn-outline" id="redo-checks" onclick="redoAction('checks')" disabled
+                            title="Redo"><i class="fas fa-redo"></i></button>
+                        <div style="width:1px;height:16px;background:var(--border);margin:0 2px;"></div>
+                        <button class="btn-outline"
+                            style="color:var(--red);border-color:var(--red-bd);background:var(--red-bg);"
+                            onclick="deleteAllChecks()">
+                            <i class="fas fa-trash-alt"></i> Clear All
+                        </button>
+                        <button class="btn-add mobile-add-btn" onclick="openMobileForm()">
+                            <i class="fas fa-plus"></i> Add Entry
+                        </button>
+                    </div>
+                </div>
+                <div class="exp-table-scroll">
+                    <table id="checksTable" class="pos-table">
+                        <thead>
+                            <tr>
+                                <th style="width:22%">Bank / Branch</th>
+                                <th style="width:18%">Account Name</th>
+                                <th style="width:14%">Check / Ref No.</th>
+                                <th style="width:11%">Receipt No.</th>
+                                <th style="width:16%">Date</th>
+                                <th style="width:19%;text-align:right;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="checksTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="exp-footer">
+                    <div class="exp-footer-info" id="checksRowInfo">0 entries · drag to reorder</div>
+                    <div class="exp-total-bar">
+                        <div class="exp-total-item t-blue">Bank Check: <span id="tot-bank-check">₱0.00</span></div>
+                        <div class="exp-total-item t-green">Transfer: <span id="tot-transfer">₱0.00</span></div>
+                        <div class="exp-total-item t-amber">GCash/eWallet: <span id="tot-ewallet">₱0.00</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="exp-form-side">
+                <div class="form-panel-header">
+                    <h3><span id="checkFormModeLabel">Add Payment</span><span class="mode-badge new"
+                            id="checkFormModeBadge">New</span></h3>
+                </div>
+                <div class="form-body">
+                    <div class="fgroup">
+                        <label>Payment Type *</label>
+                        <select id="checkInputType">
+                            <option value="Bank Check">🏦 Bank Check</option>
+                            <option value="Bank Transfer">🔁 Bank Transfer</option>
+                            <option value="GCash">📱 GCash</option>
+                            <option value="Other E-Wallet">💳 Other E-Wallet</option>
+                        </select>
+                    </div>
+                    <div class="fgroup">
+                        <label>Bank Name – Branch *</label>
+                        <input type="text" id="checkInputBank" placeholder="e.g., BDO – Goa Branch">
+                    </div>
+                    <div class="fgroup">
+                        <label>Account Name</label>
+                        <input type="text" id="checkInputAccount" placeholder="Full name on account">
+                    </div>
+                    <div class="fgroup">
+                        <label>Check / Reference Number</label>
+                        <input type="text" id="checkInputCheckNo" placeholder="e.g., 0012345">
+                    </div>
+                    <div class="frow-2">
+                        <div class="fgroup">
+                            <label>Receipt No.</label>
+                            <input type="text" id="checkInputReceipt" placeholder="INV-001">
+                        </div>
+                        <div class="fgroup">
+                            <label>Date</label>
+                            <input type="date" id="checkInputDate">
+                        </div>
+                    </div>
+                    <div class="fgroup">
+                        <label>Amount (₱)</label>
+                        <input type="text" inputmode="decimal" id="checkInputAmount" placeholder="-"
+                            class="mono-input comma-input">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-save" id="checkSaveBtn"><i class="fas fa-save"></i> <span
+                            id="checkSaveBtnLabel">Save Entry</span></button>
+                    <button class="btn-cancel" id="cancelCheckBtn" onclick="resetCheckForm()">Cancel / Clear</button>
+                    <button class="btn-delete" id="checkDeleteBtn"><i class="fas fa-trash-alt"></i> Delete
+                        Entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-panel" id="tab-income">
+        <div class="exp-layout">
+            <div class="exp-table-side">
+                <div class="panel-header">
+                    <h2><i class="fas fa-coins ph-icon"></i> Other Income</h2>
+                    <div class="panel-actions">
+                        <div
+                            style="font-size:10px;font-weight:700;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-family:'JetBrains Mono',monospace;">
+                            Total: <span id="tot-income" style="color:var(--green);">₱0.00</span>
+                        </div>
+                        <button class="btn-outline" id="undo-income" onclick="undoAction('income')" disabled
+                            title="Undo"><i class="fas fa-undo"></i></button>
+                        <button class="btn-outline" id="redo-income" onclick="redoAction('income')" disabled
+                            title="Redo"><i class="fas fa-redo"></i></button>
+                        <div style="width:1px;height:16px;background:var(--border);margin:0 2px;"></div>
+                        <button class="btn-outline"
+                            style="color:var(--red);border-color:var(--red-bd);background:var(--red-bg);"
+                            onclick="deleteAllIncome()">
+                            <i class="fas fa-trash-alt"></i> Clear All
+                        </button>
+                        <button class="btn-add mobile-add-btn" onclick="openMobileForm()">
+                            <i class="fas fa-plus"></i> Add Entry
+                        </button>
+                    </div>
+                </div>
+                <div class="exp-table-scroll">
+                    <table id="incomeTable" class="pos-table">
+                        <thead>
+                            <tr>
+                                <th style="width:16%">Particular</th>
+                                <th style="width:30%">Remarks</th>
+                                <th style="width:20%">Receipt / Ref No.</th>
+                                <th style="width:14%">Date</th>
+                                <th style="width:20%;text-align:right;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incomeTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="exp-footer">
+                    <div class="exp-footer-info" id="incomeRowInfo">0 entries · drag to reorder</div>
+                    <div class="exp-total-bar">
+                        <div class="exp-total-item t-blue">Load: <span id="tot-income-load">₱0.00</span></div>
+                        <div class="exp-total-item t-green">Cash Reimb.: <span id="tot-income-reimb">₱0.00</span></div>
+                        <div class="exp-total-item">Others: <span id="tot-income-others">₱0.00</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="exp-form-side">
+                <div class="form-panel-header">
+                    <h3><span id="incomeFormModeLabel">Add Income</span><span class="mode-badge new"
+                            id="incomeFormModeBadge">New</span></h3>
+                </div>
+                <div class="form-body">
+                    <div class="fgroup">
+                        <label>Particular *</label>
+                        <select id="incomeInputParticular">
+                            <option value="Load">📶 Load</option>
+                            <option value="Cash Reimbursement">💵 Cash Reimbursement</option>
+                            <option value="Others">📌 Others</option>
+                        </select>
+                    </div>
+                    <div class="fgroup">
+                        <label>Remarks</label>
+                        <input type="text" id="incomeInputRemarks" placeholder="e.g., Globe load sale...">
+                    </div>
+                    <div class="fgroup">
+                        <label>Receipt / Reference No.</label>
+                        <input type="text" id="incomeInputReceipt" placeholder="REF-001">
+                    </div>
+                    <div class="fgroup">
+                        <label>Date</label>
+                        <input type="date" id="incomeInputDate">
+                    </div>
+                    <div class="fgroup">
+                        <label>Amount (₱)</label>
+                        <input type="text" inputmode="decimal" id="incomeInputAmount" placeholder="-"
+                            class="mono-input comma-input">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-save" id="incomeSaveBtn"><i class="fas fa-save"></i> <span
+                            id="incomeSaveBtnLabel">Save Entry</span></button>
+                    <button class="btn-cancel" id="cancelIncomeBtn" onclick="resetIncomeForm()">Cancel / Clear</button>
+                    <button class="btn-delete" id="incomeDeleteBtn"><i class="fas fa-trash-alt"></i> Delete
+                        Entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-panel" id="tab-installment">
+        <div class="inst-landing" id="instLandingPanel">
+            <div style="display:flex;gap:8px;padding-bottom:14px;border-bottom:1px solid var(--border);">
+                <button class="btn-add" onclick="resetInstForm(); showInstForm();" style="background:var(--blue);"><i
+                        class="fas fa-user-plus"></i> New Account</button>
+                <button class="btn-outline"><i class="fas fa-file-contract"></i> Add Loan</button>
+                <button class="btn-outline"
+                    style="color:var(--green);border-color:var(--green-bd);background:var(--green-bg);"><i
+                        class="fas fa-money-bill-wave"></i> Add Payment</button>
+            </div>
+            <div class="inst-stat-grid">
+                <div class="inst-stat-card">
+                    <div class="stat-label">Due Today</div>
+                    <div class="stat-val">5</div>
+                    <div class="stat-sub">₱12,500.00 Expected</div>
+                </div>
+                <div class="inst-stat-card">
+                    <div class="stat-label">Past Due</div>
+                    <div class="stat-val" style="color:var(--red);">12</div>
+                    <div class="stat-sub" style="color:var(--red);">Requires follow-up</div>
+                </div>
+                <div class="inst-stat-card">
+                    <div class="stat-label">Last Account Paid</div>
+                    <div class="stat-val" style="font-size:15px;font-family:'Outfit',sans-serif;">Juan Dela Cruz</div>
+                    <div class="stat-sub"
+                        style="color:var(--green);font-family:'JetBrains Mono',monospace;font-weight:700;">₱1,500.00
+                    </div>
+                </div>
+            </div>
+            <div
+                style="background:var(--card);border-radius:8px;box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;">
+                <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:700;font-size:12px;">
+                    Recent Transactions</div>
+                <div style="overflow-y:auto;">
+                    <table class="pos-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Account Name</th>
+                                <th>Type</th>
+                                <th style="text-align:right;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="exp-row">
+                                <td>Apr 23, 2026</td>
+                                <td style="font-weight:600;">Juan Dela Cruz</td>
+                                <td style="color:var(--text-muted);">Payment</td>
+                                <td class="mono-amt" style="color:var(--green);">₱1,500.00</td>
+                            </tr>
+                            <tr class="exp-row">
+                                <td>Apr 23, 2026</td>
+                                <td style="font-weight:600;">Maria Santos</td>
+                                <td style="color:var(--text-muted);">New Loan</td>
+                                <td class="mono-amt" style="color:var(--blue);">₱15,000.00</td>
+                            </tr>
+                        <tbody id="installmentRecentBody"></tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="exp-layout" id="instFormContainer" style="display:none;">
+            <div class="exp-table-side">
+                <div class="panel-header" style="flex-direction:column;align-items:stretch;gap:8px;">
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <input type="text" id="fltInstSearch" placeholder="Search Name or Contact..."
+                            style="flex:1;min-width:120px;padding:6px 10px;border:1px solid var(--border);border-radius:4px;font-size:11px;outline:none;background:var(--card);color:var(--text);"
+                            oninput="renderInstallment()">
+                        <select id="fltInstBranch"
+                            style="padding:6px 8px;border:1px solid var(--border);border-radius:4px;font-size:11px;outline:none;background:var(--card);color:var(--text);"
+                            onchange="renderInstallment()">
+                            <option value="">All Branches</option>
+                            <option value="GOA">GOA</option>
+                        </select>
+                        <select id="fltInstAgent"
+                            style="padding:6px 8px;border:1px solid var(--border);border-radius:4px;font-size:11px;outline:none;background:var(--card);color:var(--text);"
+                            onchange="renderInstallment()">
+                            <option value="">All Agents</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="exp-table-scroll">
+                    <table class="pos-table horizontal-scroll-table" id="installmentTable">
+                        <thead>
+                            <tr>
+                                <th>Branch</th>
+                                <th>Last Name</th>
+                                <th>First Name</th>
+                                <th>Mid Name</th>
+                                <th>Suf</th>
+                                <th>Street/Subd</th>
+                                <th>Barangay</th>
+                                <th>City/Muni</th>
+                                <th>Province</th>
+                                <th>Occupation</th>
+                                <th>Contact</th>
+                                <th>Agent</th>
+                                <th>Referred By</th>
+                                <th>Added</th>
+                                <th style="text-align:center;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="installmentTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="exp-footer">
+                    <div class="exp-footer-info" id="instRowInfo">0 records found</div>
+                    <button class="btn-outline" onclick="hideInstForm()"><i class="fas fa-arrow-left"></i> Back</button>
+                </div>
+            </div>
+            <div class="exp-form-side" style="width:300px;">
+                <div class="form-panel-header">
+                    <h3><span id="instFormModeLabel">Add Customer</span><span class="mode-badge new"
+                            id="instFormModeBadge">New</span></h3>
+                </div>
+                <div class="form-body">
+                    <div class="form-sec-lbl">Account Info</div>
+                    <div class="fgroup">
+                        <label>Branch</label>
+                        <select id="instBranch">
+                            <option value="GOA">GOA</option>
+                        </select>
+                    </div>
+                    <div class="form-sec-lbl">Personal Details</div>
+                    <div class="frow-2">
+                        <div class="fgroup"><label>Last Name *</label><input type="text" id="instLName"
+                                placeholder="Doe"></div>
+                        <div class="fgroup"><label>First Name *</label><input type="text" id="instFName"
+                                placeholder="John"></div>
+                    </div>
+                    <div class="frow-2">
+                        <div class="fgroup"><label>Middle Name</label><input type="text" id="instMName"></div>
+                        <div class="fgroup">
+                            <label>Suffix</label>
+                            <select id="instSuffix">
+                                <option value="NONE">NONE</option>
+                                <option value="JR">JR</option>
+                                <option value="SR">SR</option>
+                                <option value="III">III</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-sec-lbl">Location &amp; Contact</div>
+                    <div class="frow-2">
+                        <div class="fgroup"><label>Province</label><input type="text" id="instProv"
+                                value="CAMARINES SUR"></div>
+                        <div class="fgroup"><label>City *</label><input type="text" id="instCity" value="GOA"></div>
+                    </div>
+                    <div class="fgroup"><label>Barangay *</label><input type="text" id="instBrgy"
+                            placeholder="Type brgy..."></div>
+                    <div class="fgroup"><label>Primary Mobile *</label><input type="text" id="instMobile"
+                            placeholder="63 9xx-xxx-xxxx"></div>
+                    <div class="fgroup"><label>Email</label><input type="email" id="instEmail"
+                            placeholder="example@email.com"></div>
+                    <div class="frow-2">
+                        <div class="fgroup"><label>Street / Sitio</label><input type="text" id="instStreet"></div>
+                        <div class="fgroup"><label>Occupation</label><input type="text" id="instOcc"></div>
+                    </div>
+                    <div class="form-sec-lbl">Agent &amp; Referral</div>
+                    <div class="frow-2">
+                        <div class="fgroup"><label>Agent</label><input type="text" id="instAgent"></div>
+                        <div class="fgroup"><label>Referred By</label><input type="text" id="instRef"></div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-save" id="instSaveBtn"><i class="fas fa-save"></i> <span
+                            id="instSaveBtnLabel">Save Customer</span></button>
+                    <button class="btn-cancel" id="instCancelBtn" onclick="resetInstForm(); hideInstForm();">Cancel /
+                        Close</button>
+                    <button class="btn-delete" id="instDeleteBtn"><i class="fas fa-trash-alt"></i> Delete Entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-panel" id="tab-financing">
+        <div class="ph-panel">
+            <div class="ph-big">🤝</div>
+            <div class="ph-h">Homecredit</div>
+            <div class="ph-s">Homecredit, Salmon, etc.</div>
+            <div class="ph-soon">Coming Soon</div>
+        </div>
+    </div>
+
+</div>

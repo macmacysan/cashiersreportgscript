@@ -1,0 +1,217 @@
+<script>
+    // ==========================================
+    // OTHER INCOME LOGIC
+    // ==========================================
+    let incomeData = [
+        { id: 'i1', particular: 'Load', remarks: 'Globe GCash Cash In', receipt: 'REF-099', date: '2026-04-21', amount: 3000.00 }
+    ];
+    let editingIncomeId = null;
+    let incomeSortable = [];
+
+    function resetIncomeForm() {
+        editingIncomeId = null;
+        ['incomeInputRemarks', 'incomeInputReceipt', 'incomeInputAmount', 'incomeInputDate'].forEach(id => setV(id, ''));
+        setV('incomeInputParticular', 'Load');
+
+        setT('incomeFormModeLabel', 'Add Income');
+        const mb = el('incomeFormModeBadge');
+        if (mb) { mb.textContent = 'New'; mb.className = 'mode-badge'; }
+
+        setT('incomeSaveBtnLabel', 'Save Entry');
+        const sb = el('incomeSaveBtn');
+        if (sb) sb.className = 'btn-save';
+
+        const db = el('incomeDeleteBtn');
+        if (db) db.style.display = 'none';
+    }
+
+    function loadIncomeForEdit(id) {
+        const item = incomeData.find(e => e.id === id);
+        if (!item) return;
+
+        editingIncomeId = item.id;
+        setV('incomeInputParticular', item.particular);
+        setV('incomeInputRemarks', item.remarks);
+        setV('incomeInputReceipt', item.receipt);
+        setV('incomeInputDate', item.date);
+        // Add commas back for readability in the input box
+        setV('incomeInputAmount', fmt(item.amount));
+
+        setT('incomeFormModeLabel', 'Edit Income');
+        const mb = el('incomeFormModeBadge');
+        if (mb) { mb.textContent = 'Editing'; mb.className = 'mode-badge edit'; }
+
+        setT('incomeSaveBtnLabel', 'Update Entry');
+        const sb = el('incomeSaveBtn');
+        if (sb) sb.className = 'btn-save update';
+
+        const db = el('incomeDeleteBtn');
+        if (db) db.style.display = 'flex';
+    }
+
+    function saveIncome() {
+        // Strip commas securely before saving
+        const amount = parseFloat(getV('incomeInputAmount').replace(/,/g, ''));
+        if (isNaN(amount)) { showAppAlert('Invalid Amount', 'Please enter a valid numeric amount.'); return; }
+
+        // Save state for Undo/Redo
+        if (typeof HistoryManager !== 'undefined') HistoryManager.saveState('income', incomeData);
+
+        const entry = {
+            id: editingIncomeId || Date.now().toString(),
+            particular: getV('incomeInputParticular'),
+            remarks: getV('incomeInputRemarks').trim() || '—',
+            receipt: getV('incomeInputReceipt').trim() || '—',
+            date: getV('incomeInputDate') || '—',
+            amount: amount
+        };
+
+        if (editingIncomeId) {
+            const idx = incomeData.findIndex(e => e.id === editingIncomeId);
+            if (idx !== -1) incomeData[idx] = entry;
+        } else {
+            incomeData.push(entry);
+        }
+
+        resetIncomeForm();
+        renderIncome();
+        if (typeof calculateMasterTotals === 'function') calculateMasterTotals();
+    }
+
+    function deleteIncomeItem() {
+        if (!editingIncomeId) return;
+
+        showAppConfirm('Delete Income', 'Are you sure you want to permanently delete this income entry?', () => {
+            if (typeof HistoryManager !== 'undefined') HistoryManager.saveState('income', incomeData);
+
+            incomeData = incomeData.filter(e => e.id !== editingIncomeId);
+            resetIncomeForm();
+            renderIncome();
+            if (typeof calculateMasterTotals === 'function') calculateMasterTotals();
+        });
+    }
+
+    function deleteAllIncome() {
+        if (incomeData.length === 0) return;
+
+        showAppConfirm('Clear All Income', 'Are you sure you want to permanently delete ALL income records?', () => {
+            if (typeof HistoryManager !== 'undefined') HistoryManager.saveState('income', incomeData);
+
+            incomeData = [];
+            resetIncomeForm();
+            renderIncome();
+            if (typeof calculateMasterTotals === 'function') calculateMasterTotals();
+        });
+    }
+
+    function renderIncome() {
+        const table = el('incomeTable');
+        if (!table) return;
+
+        incomeSortable.forEach(s => s.destroy());
+        incomeSortable = [];
+        table.querySelectorAll('tbody').forEach(tb => tb.remove());
+
+        const gOrder = ['Load', 'Cash Reimbursement', 'Others'];
+        const gMeta = {
+            'Load': { icon: '📶', cls: 'load' },
+            'Cash Reimbursement': { icon: '💵', cls: 'reimbursement' },
+            'Others': { icon: '📌', cls: 'others' }
+        };
+
+        gOrder.forEach(gType => {
+            const items = incomeData.filter(e => e.particular === gType);
+            const meta = gMeta[gType];
+
+            if (items.length === 0) return;
+
+            const tbody = document.createElement('tbody');
+            tbody.setAttribute('data-group', gType);
+            tbody.className = 'sortable-group';
+
+            const hr = document.createElement('tr');
+            hr.className = 'group-header';
+            hr.innerHTML = `<td colspan="6"><span class="group-badge ${meta.cls}">${meta.icon} ${gType} <span style="font-weight:500;opacity:0.6;">(${items.length} · ₱${fmt(items.reduce((s, i) => s + i.amount, 0))})</span></span></td>`;
+            tbody.appendChild(hr);
+
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'exp-row';
+                row.setAttribute('data-id', item.id);
+
+                row.innerHTML = `
+        <td><i class="fas fa-grip-vertical drag-icon"></i><span class="type-badge ${meta.cls}">${esc(item.particular)}</span></td>
+        <td style="font-size:10.5px;">${esc(item.remarks)}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:10.5px;">${esc(item.receipt)}</td>
+        <td style="color:var(--text-muted);font-size:10.5px;">${esc(item.date)}</td>
+        <td class="mono-amt amt-cell">
+          ₱ ${fmt(item.amount)}
+          <div class="hover-actions">
+            <button class="act-btn act-edit" data-id="${item.id}"><i class="fas fa-edit"></i></button>
+            <button class="act-btn act-del" data-id="${item.id}"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </td>`;
+                tbody.appendChild(row);
+            });
+            table.appendChild(tbody);
+        });
+
+        table.querySelectorAll('.act-edit').forEach(btn => btn.onclick = e => {
+            e.preventDefault(); e.stopPropagation();
+            loadIncomeForEdit(btn.getAttribute('data-id'));
+        });
+
+        table.querySelectorAll('.act-del').forEach(btn => btn.onclick = e => {
+            e.preventDefault(); e.stopPropagation();
+            const id = btn.getAttribute('data-id');
+
+            showAppConfirm('Delete Entry', 'Remove this entry?', () => {
+                if (typeof HistoryManager !== 'undefined') HistoryManager.saveState('income', incomeData);
+                incomeData = incomeData.filter(i => i.id !== id);
+                if (editingIncomeId === id) resetIncomeForm();
+                renderIncome();
+                if (typeof calculateMasterTotals === 'function') calculateMasterTotals();
+            });
+        });
+
+        if (typeof Sortable !== 'undefined') {
+            table.querySelectorAll('.sortable-group').forEach(tbody => {
+                incomeSortable.push(new Sortable(tbody, {
+                    group: { name: 'income', pull: true, put: true },
+                    handle: '.drag-icon',
+                    draggable: '.exp-row',
+                    animation: 150,
+                    ghostClass: 'sortable-drag',
+                    onEnd() { syncIncomeFromDOM(); renderIncome(); }
+                }));
+            });
+        }
+
+        const t = { load: 0, reimb: 0, others: 0 };
+        incomeData.forEach(i => {
+            if (i.particular === 'Load') t.load += i.amount;
+            else if (i.particular === 'Cash Reimbursement') t.reimb += i.amount;
+            else t.others += i.amount;
+        });
+
+        const grand = incomeData.reduce((s, i) => s + i.amount, 0);
+
+        if (el('tot-income')) setT('tot-income', '₱' + fmt(grand));
+        if (el('tot-income-load')) setT('tot-income-load', '₱' + fmt(t.load));
+        if (el('tot-income-reimb')) setT('tot-income-reimb', '₱' + fmt(t.reimb));
+        if (el('tot-income-others')) setT('tot-income-others', '₱' + fmt(t.others));
+        if (el('incomeRowInfo')) setT('incomeRowInfo', incomeData.length + ' entr' + (incomeData.length === 1 ? 'y' : 'ies') + ' · drag to reorder');
+    }
+
+    function syncIncomeFromDOM() {
+        const r = [];
+        document.querySelectorAll('#incomeTable .sortable-group').forEach(tbody => {
+            const g = tbody.getAttribute('data-group');
+            tbody.querySelectorAll('.exp-row').forEach(row => {
+                const o = incomeData.find(e => e.id === row.getAttribute('data-id'));
+                if (o) r.push({ ...o, particular: g });
+            });
+        });
+        if (r.length) incomeData = r;
+    }
+</script>

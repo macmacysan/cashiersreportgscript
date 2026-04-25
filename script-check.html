@@ -1,0 +1,227 @@
+<script>
+    // ==========================================
+    // CHECK PAYMENTS LOGIC
+    // ==========================================
+    let checksData = [
+        { id: 'c1', type: 'Bank Check', bank: 'BDO – Goa', account: 'Juan Dela Cruz', checkNo: '100234', receipt: 'REC-01', date: '2026-04-21', amount: 5000.00 }
+    ];
+    let editingCheckId = null;
+    let checksSortable = [];
+
+    function resetCheckForm() {
+        editingCheckId = null;
+        ['checkInputBank', 'checkInputAccount', 'checkInputCheckNo', 'checkInputReceipt', 'checkInputAmount', 'checkInputDate'].forEach(id => setV(id, ''));
+        setV('checkInputType', 'Bank Check');
+
+        setT('checkFormModeLabel', 'Add Payment');
+        const mb = el('checkFormModeBadge');
+        if (mb) { mb.textContent = 'New'; mb.className = 'mode-badge'; }
+
+        setT('checkSaveBtnLabel', 'Save Entry');
+        const sb = el('checkSaveBtn');
+        if (sb) sb.className = 'btn-save';
+
+        const db = el('checkDeleteBtn');
+        if (db) db.style.display = 'none';
+    }
+
+    function loadCheckForEdit(id) {
+        const item = checksData.find(e => e.id === id);
+        if (!item) return;
+
+        editingCheckId = item.id;
+        setV('checkInputType', item.type);
+        setV('checkInputBank', item.bank);
+        setV('checkInputAccount', item.account);
+        setV('checkInputCheckNo', item.checkNo);
+        setV('checkInputReceipt', item.receipt);
+        setV('checkInputDate', item.date);
+        // Add commas to input for readability when editing
+        setV('checkInputAmount', fmt(item.amount));
+
+        setT('checkFormModeLabel', 'Edit Payment');
+        const mb = el('checkFormModeBadge');
+        if (mb) { mb.textContent = 'Editing'; mb.className = 'mode-badge edit'; }
+
+        setT('checkSaveBtnLabel', 'Update Entry');
+        const sb = el('checkSaveBtn');
+        if (sb) sb.className = 'btn-save update';
+
+        const db = el('checkDeleteBtn');
+        if (db) db.style.display = 'flex';
+    }
+
+    function saveCheck() {
+        const bank = getV('checkInputBank').trim();
+        // Safely strip commas out of the amount before parsing
+        const amount = parseFloat(getV('checkInputAmount').replace(/,/g, ''));
+
+        if (!bank) { showAppAlert('Missing Info', 'Please enter a bank name.'); return; }
+        if (isNaN(amount)) { showAppAlert('Invalid Amount', 'Please enter a valid numeric amount.'); return; }
+
+        // Save state for Undo/Redo
+        if (typeof HistoryManager !== 'undefined') HistoryManager.saveState('checks', checksData);
+
+        const entry = {
+            id: editingCheckId || Date.now().toString(),
+            type: getV('checkInputType'),
+            bank: bank,
+            account: getV('checkInputAccount').trim() || '—',
+            checkNo: getV('checkInputCheckNo').trim() || '—',
+            receipt: getV('checkInputReceipt').trim() || '—',
+            date: getV('checkInputDate') || '—',
+            amount: amount
+        };
+
+        if (editingCheckId) {
+            const idx = checksData.findIndex(e => e.id === editingCheckId);
+            if (idx !== -1) checksData[idx] = entry;
+        } else {
+            checksData.push(entry);
+        }
+
+        resetCheckForm();
+        renderChecks();
+        if (typeof calculateMasterTotals === 'function') calculateMasterTotals();
+    }
+
+    function deleteCheckItem() {
+        if (!editingCheckId) return;
+
+        showAppConfirm('Delete Payment', 'Are you sure you want to permanently delete this check payment?', () => {
+            // Save state for Undo/Redo
+            if (typeof HistoryManager !== 'undefined') HistoryManager.saveState('checks', checksData);
+
+            checksData = checksData.filter(e => e.id !== editingCheckId);
+            resetCheckForm();
+            renderChecks();
+            if (typeof calculateMasterTotals === 'function') calculateMasterTotals();
+        });
+    }
+
+    function deleteAllChecks() {
+        if (checksData.length === 0) return;
+
+        showAppConfirm('Clear All Checks', 'Are you sure you want to permanently delete ALL check records?', () => {
+            if (typeof HistoryManager !== 'undefined') HistoryManager.saveState('checks', checksData);
+            checksData = [];
+            resetCheckForm();
+            renderChecks();
+            if (typeof calculateMasterTotals === 'function') calculateMasterTotals();
+        });
+    }
+
+    function renderChecks() {
+        const table = el('checksTable');
+        if (!table) return;
+
+        checksSortable.forEach(s => s.destroy());
+        checksSortable = [];
+        table.querySelectorAll('tbody').forEach(tb => tb.remove());
+
+        const gOrder = ['Bank Check', 'Bank Transfer', 'GCash', 'Other E-Wallet'];
+        const gMeta = {
+            'Bank Check': { icon: '🏦', cls: '' },
+            'Bank Transfer': { icon: '🔁', cls: 'transfer' },
+            'GCash': { icon: '📱', cls: 'gcash' },
+            'Other E-Wallet': { icon: '💳', cls: 'ewallet' }
+        };
+
+        gOrder.forEach(gType => {
+            const items = checksData.filter(e => e.type === gType);
+            const meta = gMeta[gType];
+
+            if (items.length === 0) return;
+
+            const tbody = document.createElement('tbody');
+            tbody.setAttribute('data-group', gType);
+            tbody.className = 'sortable-group';
+
+            const hr = document.createElement('tr');
+            hr.className = 'group-header';
+            hr.innerHTML = `<td colspan="7"><span class="group-badge ${meta.cls}">${meta.icon} ${gType} <span style="font-weight:500;opacity:0.6;">(${items.length} · ₱${fmt(items.reduce((s, i) => s + i.amount, 0))})</span></span></td>`;
+            tbody.appendChild(hr);
+
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'exp-row';
+                row.setAttribute('data-id', item.id);
+                const cls = { 'Bank Check': 'bank-check', 'Bank Transfer': 'transfer', 'GCash': 'gcash', 'Other E-Wallet': 'ewallet' }[item.type] || 'bank-check';
+
+                row.innerHTML = `
+        <td><i class="fas fa-grip-vertical drag-icon"></i><span class="type-badge ${cls}">${esc(item.type)}</span></td>
+        <td>${esc(item.bank)}</td>
+        <td>${esc(item.account)}</td>
+        <td style="font-family:'JetBrains Mono',monospace">${esc(item.checkNo)}</td>
+        <td style="color:var(--text-muted)">${esc(item.date)}</td>
+        <td class="mono-amt amt-cell">
+          ₱ ${fmt(item.amount)}
+          <div class="hover-actions">
+            <button class="act-btn act-edit" data-id="${item.id}"><i class="fas fa-edit"></i></button>
+            <button class="act-btn act-del" data-id="${item.id}"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </td>`;
+                tbody.appendChild(row);
+            });
+            table.appendChild(tbody);
+        });
+
+        table.querySelectorAll('.act-edit').forEach(btn => btn.onclick = e => {
+            e.preventDefault(); e.stopPropagation();
+            loadCheckForEdit(btn.getAttribute('data-id'));
+        });
+
+        table.querySelectorAll('.act-del').forEach(btn => btn.onclick = e => {
+            e.preventDefault(); e.stopPropagation();
+            const id = btn.getAttribute('data-id');
+
+            showAppConfirm('Delete Entry', 'Remove this payment entry?', () => {
+                if (typeof HistoryManager !== 'undefined') HistoryManager.saveState('checks', checksData);
+                checksData = checksData.filter(i => i.id !== id);
+                if (editingCheckId === id) resetCheckForm();
+                renderChecks();
+                if (typeof calculateMasterTotals === 'function') calculateMasterTotals();
+            });
+        });
+
+        if (typeof Sortable !== 'undefined') {
+            table.querySelectorAll('.sortable-group').forEach(tbody => {
+                checksSortable.push(new Sortable(tbody, {
+                    group: { name: 'checks', pull: true, put: true },
+                    handle: '.drag-icon',
+                    draggable: '.exp-row',
+                    animation: 150,
+                    ghostClass: 'sortable-drag',
+                    onEnd() { syncChecksFromDOM(); renderChecks(); }
+                }));
+            });
+        }
+
+        const t = { check: 0, transfer: 0, ewallet: 0 };
+        checksData.forEach(i => {
+            if (i.type === 'Bank Check') t.check += i.amount;
+            else if (i.type === 'Bank Transfer') t.transfer += i.amount;
+            else t.ewallet += i.amount;
+        });
+
+        const grand = checksData.reduce((s, i) => s + i.amount, 0);
+
+        if (el('tot-checks')) setT('tot-checks', '₱' + fmt(grand));
+        if (el('tot-bank-check')) setT('tot-bank-check', '₱' + fmt(t.check));
+        if (el('tot-transfer')) setT('tot-transfer', '₱' + fmt(t.transfer));
+        if (el('tot-ewallet')) setT('tot-ewallet', '₱' + fmt(t.ewallet));
+        if (el('checksRowInfo')) setT('checksRowInfo', checksData.length + ' entr' + (checksData.length === 1 ? 'y' : 'ies') + ' · drag to reorder');
+    }
+
+    function syncChecksFromDOM() {
+        const r = [];
+        document.querySelectorAll('#checksTable .sortable-group').forEach(tbody => {
+            const g = tbody.getAttribute('data-group');
+            tbody.querySelectorAll('.exp-row').forEach(row => {
+                const o = checksData.find(e => e.id === row.getAttribute('data-id'));
+                if (o) r.push({ ...o, type: g });
+            });
+        });
+        if (r.length) checksData = r;
+    }
+</script>

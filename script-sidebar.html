@@ -1,0 +1,253 @@
+<script>
+    // ==========================================
+    // 1. GLOBAL AUTO-COMMA FORMATTER & LISTENERS
+    // ==========================================
+    document.body.addEventListener('input', function (e) {
+        // Auto-Comma Formatting
+        if (e.target.classList.contains('comma-input')) {
+            let rawValue = e.target.value.replace(/[^0-9.]/g, '');
+            const parts = rawValue.split('.');
+            if (parts.length > 2) rawValue = parts[0] + '.' + parts.slice(1).join('');
+
+            if (rawValue !== '') {
+                const wholePart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                const decimalPart = parts.length > 1 ? '.' + parts[1] : '';
+                e.target.value = wholePart + decimalPart;
+            } else {
+                e.target.value = '';
+            }
+        }
+
+        // Trigger modal calculations dynamically
+        if (e.target.classList.contains('deduct-input') && typeof calculateDeductions === 'function') {
+            calculateDeductions();
+        }
+        if (e.target.classList.contains('denom-qty') && typeof calculateDenomination === 'function') {
+            calculateDenomination();
+        }
+    });
+
+    // ==========================================
+    // 2. DENOMINATION MODAL LOGIC
+    // ==========================================
+    const denominations = [1000, 500, 200, 100, 50, 20, 10, 5, 1, 0.25];
+
+    function initDenomModal() {
+        const container = document.getElementById('denom-rows-container');
+        if (!container) return;
+        container.innerHTML = '';
+
+        denominations.forEach(val => {
+            const row = document.createElement('div');
+            row.style.cssText = "display: grid; grid-template-columns: 70px 70px 1fr; gap: 12px; align-items: center;";
+
+            const label = val % 1 === 0 ? val.toLocaleString('en-US') : val.toFixed(2);
+
+            row.innerHTML = `
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 600; color: var(--text-2); transition: color 0.2s;">${label}</span>
+      <input type="text" class="s-input denom-qty comma-input" data-val="${val}" placeholder="-" style="text-align: center; font-family: 'JetBrains Mono', monospace; padding: 4px;">
+      <span class="denom-row-total" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: var(--text); text-align: right;">-</span>
+    `;
+            container.appendChild(row);
+        });
+    }
+
+    function openDenomModal() {
+        if (document.getElementById('denom-rows-container').children.length === 0) {
+            initDenomModal();
+        }
+        const modal = document.getElementById('denomModal');
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeDenomModal() {
+        const modal = document.getElementById('denomModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function clearDenominations() {
+        document.querySelectorAll('.denom-qty').forEach(input => input.value = '');
+        calculateDenomination();
+    }
+
+    function calculateDenomination() {
+        let grandTotal = 0;
+
+        document.querySelectorAll('.denom-qty').forEach(input => {
+            const qty = parseInt(input.value.replace(/,/g, '')) || 0;
+            const faceValue = parseFloat(input.getAttribute('data-val'));
+            const rowTotal = qty * faceValue;
+
+            input.nextElementSibling.innerText = rowTotal > 0 ? fmt(rowTotal) : '-';
+            grandTotal += rowTotal;
+
+            const label = input.previousElementSibling;
+            if (label) {
+                if (qty > 0) {
+                    label.style.color = 'var(--blue)';
+                    label.style.fontWeight = '800';
+                } else {
+                    label.style.color = 'var(--text-2)';
+                    label.style.fontWeight = '600';
+                }
+            }
+        });
+
+        const modalTotal = document.getElementById('modal-denom-total');
+        if (modalTotal) modalTotal.innerText = grandTotal > 0 ? fmt(grandTotal) : '-';
+    }
+
+    function applyDenomination() {
+        const finalTotal = document.getElementById('modal-denom-total').innerText;
+
+        // 1. Push it ONLY into the "Cash Amount" row in the Breakdown
+        const cashAmountRow = document.getElementById('sb-in-pay-cash');
+        if (cashAmountRow) {
+            cashAmountRow.innerText = finalTotal;
+            cashAmountRow.style.color = 'var(--text-main)';
+        }
+
+        // 2. Trigger the math function to update Cash Variance
+        if (typeof calculateMasterTotals === 'function') calculateMasterTotals();
+
+        // 3. Close the modal
+        closeDenomModal();
+    }
+
+    // ==========================================
+    // 1. DEDUCTIONS MODAL LOGIC
+    // ==========================================
+    function openDeductionsModal() {
+        const modal = document.getElementById('deductionsModal');
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeDeductionsModal() {
+        const modal = document.getElementById('deductionsModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function clearDeductions() {
+        document.querySelectorAll('.deduct-input').forEach(input => input.value = '');
+        calculateDeductions();
+    }
+
+    function calculateDeductions() {
+        let total = 0;
+
+        document.querySelectorAll('.deduct-input').forEach(input => {
+            // Strip commas before calculating
+            const val = parseFloat(input.value.replace(/,/g, '')) || 0;
+            total += val;
+
+            // Dynamic Label Color: Switch to Blue if active
+            const label = input.previousElementSibling;
+            if (label && label.classList.contains('deduct-label')) {
+                if (val > 0) {
+                    label.style.color = 'var(--blue)';
+                    label.style.fontWeight = '800';
+                } else {
+                    label.style.color = 'var(--text-muted)';
+                    label.style.fontWeight = '600';
+                }
+            }
+        });
+
+        const modalTotal = document.getElementById('modal-deduct-total');
+        if (modalTotal) modalTotal.textContent = total > 0 ? fmt(total) : '-';
+
+        const sidebarTotal = document.getElementById('sidebar-deductions');
+        if (sidebarTotal) sidebarTotal.textContent = fmt(total);
+
+        if (typeof calculateMasterTotals === 'function') calculateMasterTotals();
+    }
+
+    // ==========================================
+    // 2. SIDEBAR HOVER TOOLTIP LOGIC
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
+        const sidebarHoverTargets = [
+            { id: 'sidebar-cash-expenses', groupName: 'Company Expenses' },
+            { id: 'sidebar-cash-purchases', groupName: 'Purchases' },
+            { id: 'sidebar-drawings', groupName: 'Drawings' },
+            { id: 'sidebar-deductions', groupName: 'Deductions' },
+            { id: 'sb-in-pay-cash', groupName: 'Cash Amount' }
+        ];
+
+        const sbBreakdownTooltip = document.getElementById('sidebar-breakdown-tooltip');
+        if (!sbBreakdownTooltip) return;
+
+        sidebarHoverTargets.forEach(target => {
+            const valueSpan = document.getElementById(target.id);
+            const hoverRow = valueSpan ? valueSpan.closest('.sb-row') : null;
+
+            if (hoverRow) {
+                hoverRow.addEventListener('mouseenter', () => {
+                    sbBreakdownTooltip.innerHTML = buildBreakdownHTML(target.groupName);
+                    sbBreakdownTooltip.classList.add('show');
+                });
+                hoverRow.addEventListener('mousemove', (e) => {
+                    sbBreakdownTooltip.style.left = (e.clientX + 15) + 'px';
+                    sbBreakdownTooltip.style.top = (e.clientY + 15) + 'px';
+                });
+                hoverRow.addEventListener('mouseleave', () => {
+                    sbBreakdownTooltip.classList.remove('show');
+                });
+            }
+        });
+    });
+
+    function buildBreakdownHTML(groupName) {
+        let html = `<div class="sb-tt-title">${groupName} Breakdown</div>`;
+        let foundItems = false;
+
+        if (groupName === 'Deductions') {
+            document.querySelectorAll('.deduct-input').forEach(input => {
+                const val = parseFloat(input.value.replace(/,/g, '')) || 0;
+                if (val > 0) {
+                    const name = input.getAttribute('data-name');
+                    html += `<div class="sb-tt-row"><span class="sb-tt-desc">${name}</span><span class="sb-tt-amt">${fmt(val)}</span></div>`;
+                    foundItems = true;
+                }
+            });
+
+            // --- CASH AMOUNT TOOLTIP FIX ---
+        } else if (groupName === 'Cash Amount') {
+            document.querySelectorAll('.denom-qty').forEach(input => {
+                // 1. Safely grab the value
+                const rawVal = input.value || '';
+                // 2. Strip absolutely everything except numbers
+                const cleanVal = rawVal.replace(/[^0-9]/g, '');
+                // 3. Parse it strictly as an Integer (Base 10)
+                const qty = parseInt(cleanVal, 10) || 0;
+
+                if (qty > 0) {
+                    const faceValue = parseFloat(input.getAttribute('data-val'));
+                    const label = faceValue >= 1 ? faceValue.toLocaleString('en-US') : faceValue.toFixed(2);
+                    const rowTotal = qty * faceValue;
+                    html += `<div class="sb-tt-row"><span class="sb-tt-desc">₱${label} x ${qty}</span><span class="sb-tt-amt">${fmt(rowTotal)}</span></div>`;
+                    foundItems = true;
+                }
+            });
+
+            // --- STANDARD EXPENSES ---
+        } else {
+            let currentGroup = '';
+            document.querySelectorAll('#expenseTable tr').forEach(row => {
+                if (row.querySelector('th') || row.querySelector('td[colspan]')) {
+                    currentGroup = row.textContent.trim();
+                }
+                if (currentGroup.includes(groupName) && row.children.length >= 5 && !row.querySelector('th')) {
+                    const desc = row.children[0].textContent.trim().replace('⠿', '').trim();
+                    const amt = row.children[4].textContent.trim();
+                    html += `<div class="sb-tt-row"><span class="sb-tt-desc">${desc}</span><span class="sb-tt-amt">${amt}</span></div>`;
+                    foundItems = true;
+                }
+            });
+        }
+
+        // If nothing triggered foundItems = true, show the empty state
+        if (!foundItems) html += `<div class="sb-tt-empty">No items recorded.</div>`;
+        return html;
+    }
+</script>

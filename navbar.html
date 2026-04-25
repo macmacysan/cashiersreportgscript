@@ -1,0 +1,387 @@
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+
+    /* ── Navbar Container ── */
+    .navbar {
+        display: flex;
+        align-items: center;
+        height: 60px;
+        background: #0f172a;
+        padding: 0 16px;
+        gap: 12px;
+        border-bottom: 1px solid #1e293b;
+        font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+        color: #f8fafc;
+    }
+
+    /* ── Brand / Logo Area ── */
+    .nb-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+        padding-right: 16px;
+    }
+
+    .nb-text-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .nb-name {
+        font-size: 13px;
+        font-weight: 800;
+        color: #f8fafc;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .nb-sub {
+        font-size: 9px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        line-height: 1.2;
+    }
+
+    /* ── Tabs Navigation ── */
+    .nb-tabs {
+        display: flex;
+        gap: 4px;
+        flex: 1;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding: 0 20px;
+    }
+
+    .nb-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nb-tab {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #94a3b8;
+        background: transparent;
+        border: none;
+        white-space: nowrap;
+        transition: all 0.2s;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .nb-tab:hover {
+        background: #1e293b;
+        color: #cbd5e1;
+    }
+
+    .nb-tab.active {
+        background: #10b981;
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    /* ── Right Side Utilities ── */
+    .nb-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+        padding-left: 16px;
+        border-left: 1px solid #1e293b;
+    }
+
+    /* LIVE Badge */
+    .nb-live {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: 99px;
+        padding: 4px 10px;
+        font-size: 10px;
+        font-weight: 800;
+        color: #10b981;
+        letter-spacing: 0.5px;
+    }
+
+    .live-dot {
+        width: 6px;
+        height: 6px;
+        background: #10b981;
+        border-radius: 50%;
+        animation: livePulse 2s ease infinite;
+    }
+
+    @keyframes livePulse {
+
+        0%,
+        100% {
+            opacity: 1
+        }
+
+        50% {
+            opacity: 0.4
+        }
+    }
+
+    /* ── Interactive Date Controls ── */
+    .nb-date-controls {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        background: #1e293b;
+        padding: 4px;
+        border-radius: 8px;
+        border: 1px solid #334155;
+    }
+
+    .nb-dt-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        font-size: 14px;
+        transition: 0.2s;
+    }
+
+    .nb-dt-btn:hover {
+        background: #334155;
+        color: #f8fafc;
+    }
+
+    .nb-dt-display {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0 12px;
+        height: 28px;
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        min-width: 80px;
+    }
+
+    .nb-dt-display .d-day {
+        font-weight: 700;
+        color: #64748b;
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        line-height: 1;
+    }
+
+    .nb-dt-display .d-full {
+        font-weight: 600;
+        color: #cbd5e1;
+        font-size: 11px;
+        white-space: nowrap;
+        line-height: 1.2;
+        transition: 0.2s;
+    }
+
+    .nb-dt-display:hover .d-full {
+        color: #10b981;
+    }
+
+    .nb-dt-today {
+        height: 28px;
+        padding: 0 10px;
+        border-radius: 6px;
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .nb-dt-today:hover {
+        background: #334155;
+        color: #f8fafc;
+    }
+
+    .dt-indicator {
+        position: absolute;
+        top: 0px;
+        right: 4px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+    }
+
+    .dt-indicator.has-data {
+        background: #10b981;
+        box-shadow: 0 0 4px #10b981;
+    }
+
+    .dt-indicator.variance {
+        background: #ef4444;
+        box-shadow: 0 0 4px #ef4444;
+    }
+
+    /* Icon Buttons */
+    .nb-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: #1e293b;
+        border: 1px solid transparent;
+        color: #94a3b8;
+        font-size: 14px;
+        display: grid;
+        place-items: center;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .nb-icon:hover {
+        background: #334155;
+        color: #f8fafc;
+    }
+
+    .nb-icon.dark-toggle {
+        color: #f59e0b;
+    }
+
+    body.dark .nb-icon.dark-toggle {
+        color: #64748b;
+    }
+</style>
+
+<nav class="navbar">
+    <div class="nb-brand">
+        <div class="nb-text-group">
+            <div class="nb-name">CASHIER REPORT</div>
+            <div class="nb-sub">Nueva Camsur Home Furnishing</div>
+            <div class="nb-sub">Goa Main</div>
+        </div>
+    </div>
+
+    <div class="nb-tabs">
+        <button class="nb-tab active" onclick="switchTab('expenses',this)">Expenses</button>
+        <button class="nb-tab" onclick="switchTab('checks',this)">Check Payments</button>
+        <button class="nb-tab" onclick="switchTab('income',this)">Other Income</button>
+        <button class="nb-tab" onclick="switchTab('installment',this)">In-house Installment</button>
+        <button class="nb-tab" onclick="switchTab('installment-add',this)">Finance Credit</button>
+    </div>
+
+    <div class="nb-right">
+        <div class="nb-live">
+            <div class="live-dot"></div>LIVE
+        </div>
+
+        <div class="nb-date-controls">
+            <button class="nb-dt-btn" onclick="changeDate(-1)" title="Previous Day">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m15 18-6-6 6-6" />
+                </svg>
+            </button>
+
+            <div class="nb-dt-display" title="Select Date" onclick="alert('Future Feature: Open Calendar Modal')">
+                <span class="d-day" id="nb-day">TUE</span>
+                <span class="d-full" id="nb-date">Apr 21, 2026</span>
+                <span id="date-indicator" class="dt-indicator"></span>
+            </div>
+
+            <button class="nb-dt-btn" onclick="changeDate(1)" title="Next Day">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m9 18 6-6-6-6" />
+                </svg>
+            </button>
+            <button class="nb-dt-today" onclick="goToToday()">TODAY</button>
+        </div>
+
+        <button class="nb-icon dark-toggle" id="themeToggleBtn" onclick="toggleDarkMode()"
+            title="Toggle Theme">🌙</button>
+        <button class="nb-icon" onclick="openSettings()" title="Settings">⚙️</button>
+        <button class="nb-icon" title="User Profile">👤</button>
+        <button class="btn-outline mobile-sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+</nav>
+
+<script>
+    // ==========================================
+    // DATE NAVIGATION LOGIC
+    // ==========================================
+
+    let currentDateObj = new Date(); // Starts on today's real date
+
+    // Mock database simulating Google Sheets data (Feel free to click around dates to test the dots!)
+    let dailyDatabase = {
+        // Using generic "today", "yesterday" logic so the mock data works no matter what day you view this
+        [getFormatDateStr(new Date())]: { hasData: true, variance: 0 },
+        [getFormatDateStr(new Date(Date.now() - 86400000))]: { hasData: true, variance: -100 }, // Yesterday has a variance error
+        [getFormatDateStr(new Date(Date.now() + 86400000))]: { hasData: false, variance: 0 }    // Tomorrow is empty
+    };
+
+    function getFormatDateStr(dateObj) {
+        return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+    }
+
+    function changeDate(offsetDays) {
+        currentDateObj.setDate(currentDateObj.getDate() + offsetDays);
+        updateDateUI();
+    }
+
+    function goToToday() {
+        currentDateObj = new Date();
+        updateDateUI();
+    }
+
+    function updateDateUI() {
+        const dateStr = getFormatDateStr(currentDateObj);
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        // 1. Update the Text Labels
+        document.getElementById('nb-day').textContent = days[currentDateObj.getDay()].toUpperCase();
+        document.getElementById('nb-date').textContent = currentDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+        // 2. Update the Indicator Dot
+        const indicator = document.getElementById('date-indicator');
+        const dayData = dailyDatabase[dateStr] || { hasData: false, variance: 0 };
+
+        indicator.className = 'dt-indicator'; // Reset
+        if (dayData.variance !== 0) {
+            indicator.classList.add('variance'); // Red dot
+            indicator.title = "Cash Variance detected";
+        } else if (dayData.hasData) {
+            indicator.classList.add('has-data'); // Green dot
+            indicator.title = "Data exists for this day";
+        }
+
+        // 3. Call your render functions to update tables
+        if (typeof expensesData !== 'undefined') expensesData = []; // Clear current data
+        if (typeof checksData !== 'undefined') checksData = [];
+        if (typeof incomeData !== 'undefined') incomeData = [];
+
+        if (typeof fullRender === 'function') fullRender();
+        if (typeof renderChecks === 'function') renderChecks();
+        if (typeof renderIncome === 'function') renderIncome();
+        if (typeof calculateMasterTotals === 'function') calculateMasterTotals();
+
+        console.log("Switched active date to: " + dateStr);
+    }
+
+    // Run once on load to initialize
+    document.addEventListener('DOMContentLoaded', updateDateUI);
+</script>

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <?!= include('theme'); ?>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <div class="nav-section">
+            <?!= include('navbar'); ?>
+        </div>
+
+        <div class="left-section pos-card">
+            <?!= include('sidebar'); ?>
+        </div>
+
+        <div class="main-section pos-card">
+            <?!= include('main'); ?>
+        </div>
+
+    </div>
+
+    <?!= include('javascript'); ?>
+    <?!= include('script-installment'); ?>
+    <?!= include('script-check'); ?>
+    <?!= include('script-income'); ?>
+    <?!= include('script-expense'); ?>
+    <?!= include('script-sidebar'); ?>
+</body>
+
+</html>
+
+
+<!-- ══ SETTINGS MODAL ══ -->
+<div class="modal-overlay" id="settingsModal" style="display: none" onclick="if(event.target===this)closeSettings()">
+    <div class="modal-box">
+        <div class="modal-hd">
+            <h3>⚙️ System Settings</h3>
+            <button class="modal-close-btn" onclick="closeSettings()">✕</button>
+        </div>
+        <div class="modal-body">
+
+            <div class="modal-section-label">Display</div>
+            <div class="setting-row">
+                <div class="setting-info">
+                    <div class="s-label">Dark Mode</div>
+                    <div class="s-sub">Toggle dark / light theme</div>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="settingDark" onchange="applySettings()">
+                    <span class="toggle-track"></span>
+                </label>
+            </div>
+            <div class="setting-row">
+                <div class="setting-info">
+                    <div class="s-label">Compact Rows</div>
+                    <div class="s-sub">Tighter row padding for small screens</div>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="settingCompact" checked onchange="applySettings()">
+                    <span class="toggle-track"></span>
+                </label>
+            </div>
+            <div class="setting-row">
+                <div class="setting-info">
+                    <div class="s-label">Show VAT Column</div>
+                    <div class="s-sub">Display VAT type in expense table</div>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="settingVat" checked onchange="applySettings()">
+                    <span class="toggle-track"></span>
+                </label>
+            </div>
+
+            <div class="modal-section-label">Business</div>
+            <div class="setting-row">
+                <div class="setting-info">
+                    <div class="s-label">Cashier Name</div>
+                    <div class="s-sub">Shown on reports</div>
+                </div>
+                <input class="s-input" id="settingCashier" type="text" placeholder="Enter name…"
+                    style="width:130px;text-align:right;">
+            </div>
+            <div class="setting-row">
+                <div class="setting-info">
+                    <div class="s-label">Currency</div>
+                </div>
+                <select class="s-select" id="settingCurrency">
+                    <option value="₱">₱ Philippine Peso</option>
+                    <option value="$">$ US Dollar</option>
+                    <option value="€">€ Euro</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <div class="setting-info">
+                    <div class="s-label">Daily Sales Target</div>
+                    <div class="s-sub">Used for KPI progress bar</div>
+                </div>
+                <input class="s-input" id="settingTarget" type="number" placeholder="50000"
+                    style="width:100px;text-align:right;">
+            </div>
+
+            <div class="modal-section-label">Alerts</div>
+            <div class="setting-row">
+                <div class="setting-info">
+                    <div class="s-label">Highlight Variance</div>
+                    <div class="s-sub">Color-code cash variance in sidebar</div>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="settingHighlight" checked onchange="applySettings()">
+                    <span class="toggle-track"></span>
+                </label>
+            </div>
+            <div class="setting-row">
+                <div class="setting-info">
+                    <div class="s-label">Auto-Calculate Totals</div>
+                    <div class="s-sub">Live sidebar recalculation</div>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="settingAutoCalc" checked onchange="applySettings()">
+                    <span class="toggle-track"></span>
+                </label>
+            </div>
+
+        </div>
+        <div class="modal-ft">
+            <button class="btn-cancel-modal" onclick="closeSettings()">Cancel</button>
+            <button class="btn-save-modal" onclick="saveSettings()">Save Settings</button>
+        </div>
+    </div>
+</div>
+<div id="deductionsModal" class="modal-overlay" style="display: none;"
+    onclick="if(event.target===this)closeDeductionsModal()">
+    <div class="modal-box">
+
+        <div class="modal-hd">
+            <h3>Monthly Deductions</h3>
+            <button class="modal-close-btn" onclick="closeDeductionsModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-2);">
+                    <span class="deduct-label"
+                        style="font-size: 11px; font-weight: 600; color: var(--text-muted); transition: color 0.2s;">SSS
+                        ER (Employer Cont.)</span>
+                    <input type="text" class="s-input mono-input deduct-input comma-input" data-name="SSS ER (Employer)"
+                        placeholder="-" style="width: 120px;">
+                </div>
+
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-2);">
+                    <span class="deduct-label"
+                        style="font-size: 11px; font-weight: 600; color: var(--text-muted); transition: color 0.2s;">SSS
+                        EC (Employee Cont.)</span>
+                    <input type="text" class="s-input mono-input deduct-input comma-input" data-name="SSS EC (Employee)"
+                        placeholder="-" style="width: 120px;">
+                </div>
+
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-2);">
+                    <span class="deduct-label"
+                        style="font-size: 11px; font-weight: 600; color: var(--text-muted); transition: color 0.2s;">SSS
+                        EC / Loan Deductions</span>
+                    <input type="text" class="s-input mono-input deduct-input comma-input" data-name="SSS Loan"
+                        placeholder="-" style="width: 120px;">
+                </div>
+
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-2);">
+                    <span class="deduct-label"
+                        style="font-size: 11px; font-weight: 600; color: var(--text-muted); transition: color 0.2s;">Pag-IBIG
+                        ER</span>
+                    <input type="text" class="s-input mono-input deduct-input comma-input" data-name="Pag-IBIG ER"
+                        placeholder="-" style="width: 120px;">
+                </div>
+
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-2);">
+                    <span class="deduct-label"
+                        style="font-size: 11px; font-weight: 600; color: var(--text-muted); transition: color 0.2s;">Pag-IBIG
+                        EC</span>
+                    <input type="text" class="s-input mono-input deduct-input comma-input" data-name="Pag-IBIG EC"
+                        placeholder="-" style="width: 120px;">
+                </div>
+
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-2);">
+                    <span class="deduct-label"
+                        style="font-size: 11px; font-weight: 600; color: var(--text-muted); transition: color 0.2s;">Pag-IBIG
+                        Loan Deductions</span>
+                    <input type="text" class="s-input mono-input deduct-input comma-input" data-name="Pag-IBIG Loan"
+                        placeholder="-" style="width: 120px;">
+                </div>
+
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-2);">
+                    <span class="deduct-label"
+                        style="font-size: 11px; font-weight: 600; color: var(--text-muted); transition: color 0.2s;">PhilHealth
+                        ER</span>
+                    <input type="text" class="s-input mono-input deduct-input comma-input" data-name="PhilHealth ER"
+                        placeholder="-" style="width: 120px;">
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0;">
+                    <span class="deduct-label"
+                        style="font-size: 11px; font-weight: 600; color: var(--text-muted); transition: color 0.2s;">PhilHealth
+                        EC</span>
+                    <input type="text" class="s-input mono-input deduct-input comma-input" data-name="PhilHealth EC"
+                        placeholder="-" style="width: 120px;">
+                </div>
+
+            </div>
+
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 2px dashed var(--border);">
+                <span style="font-size: 12px; font-weight: 800; color: var(--text); text-transform: uppercase;">Grand
+                    Total</span>
+                <span id="modal-deduct-total"
+                    style="font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 800; color: var(--green);">-</span>
+            </div>
+        </div>
+
+        <div class="modal-ft">
+            <button class="btn-cancel" onclick="clearDeductions()"
+                style="margin-right: auto; color: var(--red); border-color: var(--red-bd); background: var(--red-bg);">Clear
+                All</button>
+            <button class="btn-cancel" onclick="closeDeductionsModal()">Close</button>
+            <button class="btn-save" onclick="closeDeductionsModal()">Save Deductions</button>
+        </div>
+
+    </div>
+</div>
+
+<div id="denomModal" class="modal-overlay" style="display: none;" onclick="if(event.target===this)closeDenomModal()">
+    <div class="modal-box" style="width: 340px;">
+
+        <div class="modal-hd">
+            <h3>Cash Denomination</h3>
+            <button class="modal-close-btn" onclick="closeDenomModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+
+            <div
+                style="display: grid; grid-template-columns: 70px 70px 1fr; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 4px;">
+                <span
+                    style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Bill/Coin</span>
+                <span
+                    style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; text-align: center; letter-spacing: 0.5px;">Qty</span>
+                <span
+                    style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; text-align: right; letter-spacing: 0.5px;">Amount</span>
+            </div>
+
+            <div id="denom-rows-container" style="display: flex; flex-direction: column; gap: 6px;"></div>
+
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 2px dashed var(--border);">
+                <span style="font-size: 12px; font-weight: 800; color: var(--text); text-transform: uppercase;">Total
+                    Cash</span>
+                <span id="modal-denom-total"
+                    style="font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 800; color: var(--green);">-</span>
+            </div>
+        </div>
+
+        <div class="modal-ft">
+            <button class="btn-cancel" onclick="clearDenominations()"
+                style="margin-right: auto; color: var(--red); border-color: var(--red-bd); background: var(--red-bg);">Clear
+                All</button>
+            <button class="btn-cancel" onclick="closeDenomModal()">Close</button>
+            <button class="btn-save" onclick="applyDenomination()">Update Cash Amount</button>
+        </div>
+
+    </div>
+</div>
+
+<div id="customDialogModal" class="modal-overlay" style="display: none; z-index: 10001;"
+    onclick="if(event.target===this)closeCustomDialog()">
+    <div class="modal-box" style="width: 320px;">
+
+        <div class="modal-hd">
+            <h3 id="customDialogTitle">Notification</h3>
+            <button class="modal-close-btn" onclick="closeCustomDialog()">✕</button>
+        </div>
+
+        <div class="modal-body" style="padding: 20px 18px; text-align: center;">
+            <p id="customDialogMessage" style="font-size: 13px; color: var(--text-2); font-weight: 500; margin: 0;"></p>
+        </div>
+
+        <div class="modal-ft" style="justify-content: center; border-top: none; padding-top: 0;">
+            <button id="customDialogCancelBtn" class="btn-cancel" onclick="closeCustomDialog()"
+                style="display: none;">Cancel</button>
+            <button id="customDialogConfirmBtn" class="btn-save update" onclick="closeCustomDialog()">OK</button>
+        </div>
+
+    </div>
+</div>

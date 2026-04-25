@@ -1,0 +1,115 @@
+<div class="sb-wrap">
+    <div class="sb-body">
+
+        <div class="sb-opening">
+            <span class="lbl">Opening Cash</span>
+            <input id="sb-in-opening" oninput="calculateMasterTotals()" class="sb-input sb-input-right comma-input"
+                type="text" placeholder="-" style="width: 100px; background: transparent !important;">
+        </div>
+
+        <div class="sb-thead">
+            <span>Receipt Type</span>
+            <span style="text-align:center;">Qty</span>
+            <span style="text-align:right;">Amount</span>
+        </div>
+
+        <div class="sb-irow">
+            <span class="lbl muted">Sales Invoice</span>
+            <input class="sb-input sb-input-center comma-input" type="text" placeholder="-">
+            <input id="sb-in-si" oninput="calculateMasterTotals()" class="sb-input sb-input-right comma-input"
+                type="text" placeholder="-">
+        </div>
+        <div class="sb-irow">
+            <span class="lbl muted">SI – Trading</span>
+            <input class="sb-input sb-input-center comma-input" type="text" placeholder="-">
+            <input id="sb-in-sitrading" oninput="calculateMasterTotals()" class="sb-input sb-input-right comma-input"
+                type="text" placeholder="-">
+        </div>
+        <div class="sb-irow">
+            <span class="lbl muted">Delivery Receipt</span>
+            <input class="sb-input sb-input-center comma-input" type="text" placeholder="-">
+            <input id="sb-in-delrec" oninput="calculateMasterTotals()" class="sb-input sb-input-right comma-input"
+                type="text" placeholder="-">
+        </div>
+        <div class="sb-irow">
+            <span class="lbl muted">Bobs Pawnshop</span>
+            <input class="sb-input sb-input-center comma-input" type="text" placeholder="-">
+            <input id="sb-in-bobs" oninput="calculateMasterTotals()" class="sb-input sb-input-right comma-input"
+                type="text" placeholder="-">
+        </div>
+        <div class="sb-subtotal">
+            <span>Subtotal – Receipts</span>
+            <span id="sb-out-subtotal-receipts">-</span>
+        </div>
+
+        <div class="sb-row two-col"><span class="lbl muted">Cash Collections</span><span class="val"
+                id="sidebar-collections">-</span></div>
+        <div class="sb-row two-col"><span class="lbl muted">Credit Finance</span><span class="val"
+                id="sidebar-credits">-</span></div>
+        <div class="sb-row two-col"><span class="lbl muted">Other Income</span><span class="val"
+                id="sidebar-others">-</span></div>
+        <div class="sb-subtotal">
+            <span>Total Paid Cash</span>
+            <span id="sb-out-total-paid-cash">-</span>
+        </div>
+
+        <div class="sb-section">Paid Out</div>
+        <div class="sb-row two-col">
+            <span class="lbl muted">Cash Expenses</span>
+            <span class="val" id="sidebar-cash-expenses">-</span>
+        </div>
+        <div class="sb-row two-col" style="cursor: pointer; transition: 0.2s;" onclick="openDeductionsModal()"
+            id="row-deductions">
+            <span class="lbl muted">Deductions 🧮</span>
+            <span class="val" id="sidebar-deductions">-</span>
+        </div>
+        <div class="sb-row two-col">
+            <span class="lbl muted">Drawings</span>
+            <span class="val" id="sidebar-drawings">-</span>
+        </div>
+        <div class="sb-row two-col">
+            <span class="lbl muted">Cash Purchases</span>
+            <span class="val" id="sidebar-cash-purchases">-</span>
+        </div>
+        <div class="sb-subtotal">
+            <span>Total Paid Out</span>
+            <span id="sb-out-total-paid-out">-</span>
+        </div>
+
+        <div class="sb-section">Payment Breakdown</div>
+        <div class="sb-row two-col" style="cursor: pointer; transition: 0.2s;" onclick="openDenomModal()"
+            id="row-cash-amount">
+            <span class="lbl muted">Cash Amount 🧮</span>
+            <span class="val" id="sb-in-pay-cash">-</span>
+        </div>
+        <div class="sb-row two-col"><span class="lbl muted">Bank Check</span><span class="val"
+                id="sb-in-pay-check">-</span></div>
+        <div class="sb-row two-col"><span class="lbl muted">Bank Transfer</span><span class="val"
+                id="sb-in-pay-transfer">-</span></div>
+        <div class="sb-row two-col"><span class="lbl muted">GCash</span><span class="val" id="sb-in-pay-gcash">-</span>
+        </div>
+        <div class="sb-row two-col"><span class="lbl muted">Other E-Wallet</span><span class="val"
+                id="sb-in-pay-ewallet">-</span></div>
+        <div class="sb-subtotal" style="border-bottom: 1px dashed var(--border-light); margin-bottom: 20px;">
+            <span>Total Payments</span>
+            <span id="sb-out-total-payments">-</span>
+        </div>
+    </div>
+
+    <div class="sb-footer">
+        <div class="footer-row">
+            <span class="lbl">Expected Cash</span>
+            <span class="val" id="sb-out-expected-cash">-</span>
+        </div>
+        <div class="footer-row">
+            <span class="lbl">Cash Remitted</span>
+            <input id="sb-in-cash-remitted" oninput="calculateMasterTotals()"
+                class="sb-input sb-input-right footer-input comma-input" type="text" placeholder="-">
+        </div>
+
+        <div class="sb-grand warning footer-row" id="sb-grand-variance-box">
+            <span>Cash Variance</span>
+            <span id="sb-out-variance">-</span>
+        </div>
+    </div>
+</div>

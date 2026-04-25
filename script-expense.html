@@ -1,0 +1,153 @@
+<script>
+    //script-expense.html
+    // ── EXPENSES ──
+    let expensesData = [
+        { id: '1', type: 'Purchases', description: 'Sample Purchase – Laptop', receipt: 'PO-1001', category: 'Office Expenses', vat: 'Vat', amount: 1250.00 },
+        { id: '2', type: 'Company Expenses', description: 'Office Supplies (Printer)', receipt: 'REC-202', category: 'Office Expenses', vat: 'Vat', amount: 89.50 },
+        { id: '3', type: 'Drawings', description: 'Personal Withdrawal', receipt: 'DW-09', category: 'Others', vat: 'Non-Vat', amount: 300.00 },
+        { id: '4', type: 'Purchases', description: 'Inventory Restock', receipt: 'PO-1005', category: 'Others', vat: 'Vat', amount: 680.00 },
+        { id: '5', type: 'Company Expenses', description: 'Bank Fees – Monthly', receipt: 'BNK-77', category: 'Bank Fees', vat: 'Non-Vat', amount: 15.75 },
+    ];
+    let editingId = null, sortableInstances = [];
+
+    function resetForm() {
+        editingId = null;
+        ['inputDesc', 'inputReceipt', 'inputAmount'].forEach(id => setV(id, ''));
+        setV('inputType', 'Company Expenses'); setV('inputVat', 'Vat'); setV('inputCategory', 'Others');
+        setT('formModeLabel', 'Add Expense');
+        const mb = el('formModeBadge'); if (mb) { mb.textContent = 'New'; mb.className = 'mode-badge'; }
+        setT('saveBtnLabel', 'Save Entry');
+        const sb = el('saveBtn'); if (sb) sb.className = 'btn-save';
+        const db = el('deleteBtn'); if (db) db.style.display = 'none';
+    }
+
+    function loadFormForEdit(id) {
+        const item = expensesData.find(e => e.id === id); if (!item) return;
+        editingId = item.id;
+        setV('inputType', item.type); setV('inputDesc', item.description);
+        setV('inputReceipt', item.receipt || ''); setV('inputVat', item.vat);
+        setV('inputCategory', item.category); setV('inputAmount', item.amount);
+        setT('formModeLabel', 'Edit Expense');
+        const mb = el('formModeBadge'); if (mb) { mb.textContent = 'Editing'; mb.className = 'mode-badge edit'; }
+        setT('saveBtnLabel', 'Update Entry');
+        const sb = el('saveBtn'); if (sb) sb.className = 'btn-save update';
+        const db = el('deleteBtn'); if (db) db.style.display = 'flex';
+    }
+
+    function saveExpense() {
+        const desc = getV('inputDesc').trim(), amount = parseFloat(getV('inputAmount').replace(/,/g, ''));
+        if (!desc) { showAppAlert('Missing Info', 'Please enter a description.'); return; }
+        if (isNaN(amount)) { showAppAlert('Missing Info', 'Please enter a valid amount.'); return; }
+
+        // 1. TAKE SNAPSHOT BEFORE CHANGING DATA
+        HistoryManager.saveState('expenses', expensesData);
+
+        const entry = { id: editingId || Date.now().toString(), type: getV('inputType') || 'Company Expenses', description: desc, receipt: getV('inputReceipt').trim() || '—', vat: getV('inputVat') || 'Vat', category: getV('inputCategory') || 'Others', amount };
+
+        if (editingId) { const idx = expensesData.findIndex(e => e.id === editingId); if (idx !== -1) expensesData[idx] = entry; }
+        else expensesData.push(entry);
+
+        resetForm(); fullRender();
+    }
+
+    function deleteCurrentItem() {
+        if (!editingId) return;
+
+        showAppConfirm('Delete Expense', 'Are you sure you want to delete this expense permanently?', () => {
+            // Everything inside this block only happens IF they click "Yes, Delete"
+            expensesData = expensesData.filter(e => e.id !== editingId);
+            resetForm();
+            fullRender();
+            if (typeof calculateMasterTotals === 'function') calculateMasterTotals();
+        });
+    }
+
+    function fullRender() {
+        const table = el('expenseTable'); if (!table) return;
+        sortableInstances.forEach(s => s.destroy()); sortableInstances = [];
+        table.querySelectorAll('tbody').forEach(tb => tb.remove());
+        const gOrder = ['Company Expenses', 'Purchases', 'Drawings'];
+        const gMeta = { 'Company Expenses': { icon: '🏢', cls: '' }, 'Purchases': { icon: '📦', cls: 'purchases' }, 'Drawings': { icon: '💸', cls: 'drawings' } };
+        gOrder.forEach(gType => {
+            const items = expensesData.filter(e => e.type === gType), meta = gMeta[gType];
+
+            // Stop and skip to the next category if there are no items
+            if (items.length === 0) return;
+
+            const tbody = document.createElement('tbody');
+            tbody.setAttribute('data-group', gType); tbody.className = 'sortable-group';
+            const hr = document.createElement('tr'); hr.className = 'group-header';
+            hr.innerHTML = `<td colspan="6"><span class="group-badge ${meta.cls}">${meta.icon} ${gType} <span style="font-weight:500;opacity:0.6;">(${items.length} · ₱${fmt(items.reduce((s, i) => s + i.amount, 0))})</span></span></td>`;
+            tbody.appendChild(hr);
+            items.forEach(item => {
+                const row = document.createElement('tr'); row.className = 'exp-row'; row.setAttribute('data-id', item.id);
+                row.innerHTML = `<td><i class="fas fa-grip-vertical drag-icon"></i>${esc(item.description)}</td>
+        <td style="color:var(--text-muted)">${esc(item.receipt)}</td>
+        <td style="font-size:12px;">${esc(item.category)}</td>
+        <td><span class="vat-badge ${item.vat === 'Vat' ? 'vat' : 'non-vat'}">${item.vat === 'Vat' ? 'VAT' : 'NON'}</span></td>
+        <td class="mono-amt amt-cell">
+          ₱ ${fmt(item.amount)}
+          <div class="hover-actions">
+            <button class="act-btn act-edit" data-id="${item.id}"><i class="fas fa-edit"></i></button>
+            <button class="act-btn act-del" data-id="${item.id}"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        </td>`;
+                tbody.appendChild(row);
+            });
+            table.appendChild(tbody);
+        });
+        table.querySelectorAll('.act-edit').forEach(btn => btn.onclick = e => { e.preventDefault(); e.stopPropagation(); loadFormForEdit(btn.getAttribute('data-id')); });
+        table.querySelectorAll('.act-del').forEach(btn => btn.onclick = e => {
+            e.preventDefault(); e.stopPropagation();
+            const id = btn.getAttribute('data-id');
+
+            showAppConfirm('Delete Entry', 'Remove this entry?', () => {
+                // 1. TAKE SNAPSHOT BEFORE CHANGING DATA
+                HistoryManager.saveState('expenses', expensesData);
+
+                expensesData = expensesData.filter(i => i.id !== id);
+                if (editingId === id) resetForm();
+                fullRender();
+                if (typeof calculateMasterTotals === 'function') calculateMasterTotals();
+            });
+        });
+        if (typeof Sortable !== 'undefined') {
+            table.querySelectorAll('.sortable-group').forEach(tbody => {
+                sortableInstances.push(new Sortable(tbody, { group: { name: 'expenses', pull: true, put: true }, handle: '.drag-icon', draggable: '.exp-row', animation: 150, ghostClass: 'sortable-drag', onEnd() { syncDataFromDOM(); fullRender(); } }));
+            });
+        }
+        const t = { 'Company Expenses': 0, 'Purchases': 0, 'Drawings': 0 };
+        expensesData.forEach(d => { if (t[d.type] !== undefined) t[d.type] += d.amount; });
+        const grand = Object.values(t).reduce((a, b) => a + b, 0);
+        setT('kpi-exp-grand', '₱' + fmt(grand)); setT('kpi-exp-company', '₱' + fmt(t['Company Expenses']));
+        setT('kpi-exp-purchases', '₱' + fmt(t['Purchases'])); setT('kpi-exp-drawings', '₱' + fmt(t['Drawings']));
+        setT('kpi-exp-rows', expensesData.length.toString()); setT('kpi-exp-count', expensesData.length + ' entr' + (expensesData.length === 1 ? 'y' : 'ies'));
+        setT('tot-company', '₱' + fmt(t['Company Expenses'])); setT('tot-purchases', '₱' + fmt(t['Purchases']));
+        setT('tot-drawings', '₱' + fmt(t['Drawings'])); setT('grandTotalDisplay', '₱' + fmt(grand));
+        setT('rowCountInfo', expensesData.length + ' entr' + (expensesData.length === 1 ? 'y' : 'ies') + ' · drag to reorder');
+    }
+    function syncDataFromDOM() {
+        const r = [];
+        document.querySelectorAll('#expenseTable .sortable-group').forEach(tbody => {
+            const g = tbody.getAttribute('data-group');
+            tbody.querySelectorAll('.exp-row').forEach(row => {
+                const o = expensesData.find(e => e.id === row.getAttribute('data-id'));
+                if (o) r.push({ ...o, type: g });
+            });
+        });
+        if (r.length) expensesData = r;
+    }
+    function deleteAllExpenses() {
+        if (expensesData.length === 0) return;
+
+        showAppConfirm('Clear All Expenses', 'Are you sure you want to permanently delete ALL expense records?', () => {
+            // 1. TAKE SNAPSHOT BEFORE CHANGING DATA
+            HistoryManager.saveState('expenses', expensesData);
+
+            expensesData = [];
+            resetForm();
+            fullRender();
+            if (typeof calculateMasterTotals === 'function') calculateMasterTotals();
+        });
+    }
+</script>
