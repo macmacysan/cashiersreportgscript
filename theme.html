@@ -69,6 +69,9 @@
         --radius-lg: 14px;
         --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.05);
         --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.1);
+
+        /* Layout safety */
+        --sb-min-width: 200px;
     }
 
     /* Dark mode overrides (sidebar excluded – uses its own hardcoded vars) */
@@ -174,6 +177,10 @@
             gap: 5px;
             padding: 5px;
         }
+
+        .left-section {
+            min-width: 0;
+        }
     }
 
     @media (max-width: 680px) {
@@ -186,19 +193,34 @@
         .left-section {
             display: none;
         }
+
+        .main-section {
+            min-width: 0;
+        }
+    }
+
+    /* Additional responsive adjustments */
+    @media (max-width: 480px) {
+        .app-container {
+            grid-template-rows: 44px 1fr;
+        }
     }
 
     .nav-section {
         grid-area: nav;
+        overflow: hidden;
     }
 
     .left-section {
         grid-area: left;
+        overflow: hidden;
+        min-width: 0;
     }
 
     .main-section {
         grid-area: main;
         overflow: hidden;
+        min-width: 0;
     }
 
     /* ═══════════════════════════════════════════════
@@ -1706,6 +1728,32 @@
         .left-section.show-sidebar {
             left: 0;
             /* Slides into view */
+        }
+
+        /* Ensure main content scales properly on mobile */
+        .main-section {
+            width: 100%;
+            min-width: 0;
+        }
+    }
+
+    /* Prevent content overflow and ensure smooth resizing */
+    @media (max-width: 900px) and (min-width: 681px) {
+        .left-section {
+            min-width: 150px;
+            max-width: 200px;
+            width: auto;
+        }
+
+        .sb-wrap {
+            min-width: 0;
+        }
+
+        .sb-thead,
+        .sb-row,
+        .sb-irow {
+            grid-template-columns: 1fr 35px 70px;
+            gap: 4px;
         }
     }
 </style>
